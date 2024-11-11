@@ -1,3 +1,29 @@
+# AlistUtil-Spring
+
+---
+
+本项目基于[1530624156/AlistUtil](https://github.com/1530624156/AlistUtil)，扩展了Spring支持，可使用Spring来自动管理服务
+
+本项目没有上传Maven仓库，如需使用，请自行编译
+
+- 增加配置
+  ```yaml
+  alist:
+    alist-base-url: http://example.com
+    alist-username: admin
+    alist-password: 123456
+  ```
+- 服务引入
+  ```java
+    @Resource
+    private AlistService alistService;
+  ```
+后续根据原文档使用对应方法即可
+
+--- 
+
+## 以下为原工程文档
+
 # AlistUtil.jar
 
 ---

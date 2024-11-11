@@ -1,0 +1,4 @@
+alist:
+  alist-base-url: http://example.com
+  alist-username: admin
+  alist-password: 123456

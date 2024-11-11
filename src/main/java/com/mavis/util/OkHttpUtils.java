@@ -5,6 +5,7 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class OkHttpUtils {
     private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
@@ -17,7 +18,7 @@ public class OkHttpUtils {
      * @param bodyData 请求体数据,可以是 Map 或 JSON 字符串
      * @return 响应结果
      */
-    public static String doPost(String url, Object bodyData) {
+    public static String doPost(String url, Object bodyData, Supplier<String> at401) {
         RequestBody requestBody;
         if (bodyData instanceof Map) {
             requestBody = RequestBody.create(JSON, new Gson().toJson(bodyData));
@@ -34,6 +35,9 @@ public class OkHttpUtils {
             if (response.isSuccessful()) {
                 return response.body().string();
             } else {
+                if (response.code() == 401 && at401 != null){
+                    return at401.get();
+                }
                 throw new IOException("错误代码:" + response);
             }
         } catch (IOException e) {
@@ -41,7 +45,7 @@ public class OkHttpUtils {
         }
     }
 
-    public static String doPostWithHeaders(String url, Object bodyData, Map<String, String> headers) {
+    public static String doPostWithHeaders(String url, Object bodyData, Map<String, String> headers, Supplier<String> at401) {
         RequestBody requestBody;
         if (bodyData instanceof Map) {
             requestBody = RequestBody.create(JSON, new Gson().toJson(bodyData));
@@ -61,6 +65,9 @@ public class OkHttpUtils {
             if (response.isSuccessful()) {
                 return response.body().string();
             } else {
+                if (response.code() == 401 && at401 != null){
+                    return at401.get();
+                }
                 throw new IOException("错误代码:" + response);
             }
         } catch (IOException e) {

@@ -1,10 +1,15 @@
-package com.mavis.util;
+package com.mavis.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.mavis.entity.AlistConfig;
+import com.mavis.service.AlistService;
+import com.mavis.util.OkHttpUtils;
 import okhttp3.*;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -12,18 +17,28 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class AlistUtils {
+/**
+ * @author Kane
+ * @since 2024/10/9 10:50
+ */
+@Service
+@EnableConfigurationProperties(AlistConfig.class)
+public class AlistServiceImpl implements AlistService {
 
-    private static final AlistConfig alistConfig = AlistConfig.getConfig();
+    private final AlistConfig alistConfig;
 
-    private static String token = "null";
+    private String token = null;
+
+    public AlistServiceImpl(@Qualifier("97166c07-9e60-405b-adc7-897c142b4119") AlistConfig alistConfig) {
+        this.alistConfig = alistConfig;
+    }
 
     /**
      * 获取AlistToken
      *
      * @return AlistToken
      */
-    public synchronized static String getToken() {
+    public synchronized String getToken() {
         if (token != null){
             return token;
         }
@@ -35,9 +50,7 @@ public class AlistUtils {
         String resultBody = OkHttpUtils.doPost(url, dataBody, null);
         // 处理返回数据获取token并返回
         JSONObject json_data = JSON.parseObject(JSON.parseObject(resultBody).get("data").toString());
-        String token = json_data.get("token").toString();
-        AlistUtils.token = token;
-        return token;
+        return json_data.get("token").toString();
     }
 
     /**
@@ -46,7 +59,7 @@ public class AlistUtils {
      * @param path 路径
      *             eg:/files/test
      */
-    public static String getAlistFileList(String path) {
+    public String getAlistFileList(String path) {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/list";
         HashMap<String, String> headerData = new HashMap<>();
         HashMap<String, String> bodyData = new HashMap<>();
@@ -66,7 +79,7 @@ public class AlistUtils {
      * @param password 文件密码，可以传空字符串
      * @return
      */
-    public static String getAlistFileInfo(String path, String password) {
+    public String getAlistFileInfo(String path, String password) {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/get";
         HashMap<String, String> headerData = new HashMap<>();
         HashMap<String, String> bodyData = new HashMap<>();
@@ -87,7 +100,7 @@ public class AlistUtils {
      * @param password 文件密码，可以传空字符串
      * @return {path : rawUrl}
      */
-    public static ArrayList<HashMap<String, String>> getAlistAllFilesInfo(String path, String password) {
+    public ArrayList<HashMap<String, String>> getAlistAllFilesInfo(String path, String password) {
         // 获取path目录下信息
         String result = getAlistFileList(path);
         // 获取所有的信息
@@ -102,7 +115,7 @@ public class AlistUtils {
     }
 
     //处理文件夹
-    private static void processDirectory(ArrayList<HashMap<String, String>> filesInfoMaps, String path, JSONArray json_array, String password) {
+    private void processDirectory(ArrayList<HashMap<String, String>> filesInfoMaps, String path, JSONArray json_array, String password) {
         //判空处理
         if (json_array == null || json_array.isEmpty()) {
             return;
@@ -147,7 +160,7 @@ public class AlistUtils {
         }
     }
 
-    private static String safePathJoin(String base, String name) {
+    private String safePathJoin(String base, String name) {
         // 防止路径穿越
         return base.endsWith("/") ? base + name : base + "/" + name;
     }
@@ -162,7 +175,7 @@ public class AlistUtils {
      * @return 文件路径/结果
      * @throws IOException
      */
-    public static String uploadFile(String originalPath, String FileName, String targetPath) throws IOException {
+    public String uploadFile(String originalPath, String FileName, String targetPath) throws IOException {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/put";
         OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
