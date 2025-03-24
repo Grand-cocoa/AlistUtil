@@ -12,6 +12,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ public class AlistServiceImpl implements AlistService {
      *
      * @return AlistToken
      */
+    @Override
     public synchronized String getToken() {
         if (token != null){
             return token;
@@ -59,6 +61,7 @@ public class AlistServiceImpl implements AlistService {
      * @param path 路径
      *             eg:/files/test
      */
+    @Override
     public String getAlistFileList(String path) {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/list";
         HashMap<String, String> headerData = new HashMap<>();
@@ -79,6 +82,7 @@ public class AlistServiceImpl implements AlistService {
      * @param password 文件密码，可以传空字符串
      * @return
      */
+    @Override
     public String getAlistFileInfo(String path, String password) {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/get";
         HashMap<String, String> headerData = new HashMap<>();
@@ -100,6 +104,7 @@ public class AlistServiceImpl implements AlistService {
      * @param password 文件密码，可以传空字符串
      * @return {path : rawUrl}
      */
+    @Override
     public ArrayList<HashMap<String, String>> getAlistAllFilesInfo(String path, String password) {
         // 获取path目录下信息
         String result = getAlistFileList(path);
@@ -175,6 +180,7 @@ public class AlistServiceImpl implements AlistService {
      * @return 文件路径/结果
      * @throws IOException
      */
+    @Override
     public String uploadFile(String originalPath, String FileName, String targetPath) throws IOException {
         String url = alistConfig.getAlistBaseUrl() + "/api/fs/put";
         OkHttpClient client = new OkHttpClient().newBuilder()
@@ -182,6 +188,38 @@ public class AlistServiceImpl implements AlistService {
         MediaType mediaType = MediaType.parse("text/plain");
         byte[] bytes = Files.readAllBytes(Paths.get(originalPath));
         RequestBody body = RequestBody.create(mediaType, bytes);
+        Request request = new Request.Builder()
+                .url(url)
+                .method("PUT", body)
+                .addHeader("Authorization", getToken())
+                .addHeader("File-Path", targetPath + "/" + FileName)
+                .addHeader("As-Task", "true")
+                .addHeader("Content-Length", "")
+                .build();
+        Response response = client.newCall(request).execute();
+        JSONObject parse = JSON.parseObject(response.body().string());
+        if (parse.get("code").toString().equals("200")) {
+            return alistConfig.getAlistBaseUrl() + "/d" + targetPath + "/" + FileName;
+        } else {
+            return parse.get("message").toString();
+        }
+    }
+
+    /**
+     * 上传文件
+     *
+     * @param outputStream 文件流
+     * @param FileName     目标文件名
+     * @param targetPath   目标路径
+     * @return 文件路径/结果
+     */
+    @Override
+    public String uploadFile(byte[] outputStream, String FileName, String targetPath) throws IOException {
+        String url = alistConfig.getAlistBaseUrl() + "/api/fs/put";
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .build();
+        MediaType mediaType = MediaType.parse("text/plain");
+        RequestBody body = RequestBody.create(mediaType, outputStream);
         Request request = new Request.Builder()
                 .url(url)
                 .method("PUT", body)

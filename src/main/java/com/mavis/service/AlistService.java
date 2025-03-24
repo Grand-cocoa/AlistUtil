@@ -1,6 +1,7 @@
 package com.mavis.service;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -46,4 +47,13 @@ public interface AlistService {
      * @return 文件路径/结果
      */
     String uploadFile(String originalPath, String FileName, String targetPath) throws IOException;
+
+    /**
+     * 上传文件
+     * @param outputStream 文件流
+     * @param FileName     目标文件名
+     * @param targetPath   目标路径
+     * @return 文件路径/结果
+     */
+    String uploadFile(byte[] outputStream, String FileName, String targetPath) throws IOException;
 }
